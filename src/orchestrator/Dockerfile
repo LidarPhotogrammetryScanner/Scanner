@@ -1,7 +1,6 @@
-# Minimal generic ROS 2 image
 FROM osrf/ros:kilted-desktop
 
-# Install essential ROS 2 build tools
+# Install essential tools
 RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     git \
@@ -17,15 +16,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/ros2_ws
 RUN mkdir -p src
 
-# Copy Python service and entrypoint
-COPY ./run_service.py /root/ros2_ws/src/run_service.py
+# Copy orchestrator node and entrypoint
+COPY ./orchestrator_service.py /root/ros2_ws/src/orchestrator_service.py
 COPY ./entrypoint.sh /entrypoint.sh
 
-# Build workspace (empty workspace is okay)
+# Build workspace
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"
 
-# Set entrypoint
+# Entrypoint and default CMD
 ENTRYPOINT ["/entrypoint.sh"]
-
-# Default command keeps container alive
-CMD ["bash"]
+CMD ["ros2", "run", "orchestrator_service", "orchestrator_service"]

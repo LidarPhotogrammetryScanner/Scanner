@@ -11,7 +11,7 @@ class DataProcessorService(Node):
 
     def handle_process(self, request, response):
         response.success = True
-        response.message = "test"
+        response.message = "Processed successfully!"
         self.get_logger().info('Processing request...')
         return response
 
