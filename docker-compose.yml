@@ -1,40 +1,52 @@
 version: "3.8"
 services:
+  
   lidar:
-    build: .
-    container_name: ros2_ldlidar
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    build: ./src/lidar
+    container_name: lidar
+    network_mode: "host"
     environment:
-      - ROS_DOMAIN_ID=5
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    privileged: true  
-    command: >
-      bash -c "
-      ros2 launch ldlidar_ros2 ld14p.launch.py
-      "
-    networks:
-      - ros-net
+      - ROS_DOMAIN_ID=0
+    stdin_open: true
     tty: true
+    command: bash
 
-#  rviz:
-#    build: .
-#    container_name: ros2_ldlidar_rviz
-#    depends_on:
-#      - lidar
-#    environment:
-#      - ROS_DOMAIN_ID=5
-#      - DISPLAY=${DISPLAY}
-#    volumes:
-#      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-#    command: >
-#      bash -c "
-#      rviz2
-#      "
-#    networks:
-#      - ros-net
-#    tty: true
+  photogrammetry:
+    build: ./src/photogrammetry
+    container_name: photogrammetry
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=0
+    stdin_open: true
+    tty: true
+    command: bash
 
+  servo:
+    build: ./src/servo
+    container_name: servo
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=0
+    stdin_open: true
+    tty: true
+    command: bash
 
-networks:
-  ros-net:
+  orchestrator:
+    build: ./src/orchestrator
+    container_name: orchestrator
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=0
+    stdin_open: true
+    tty: true
+    command: bash
+
+  data_processor:
+    build: ./src/data_processor
+    container_name: data_processor
+    network_mode: "host"
+    environment:
+      - ROS_DOMAIN_ID=0
+    stdin_open: true
+    tty: true
+    command: bash
