@@ -1,16 +1,18 @@
 #!/bin/bash
-# ros_entrypoint.sh for LiDAR node
+# Generic ROS 2 entrypoint
 
-# Exit on error
 set -e
 
-# Source ROS 2 Kilted setup
+# Source ROS 2
 source /opt/ros/kilted/setup.bash
 
-# Source the workspace (so the ldlidar_ros2 package is found)
-if [ -f /root/ldlidar_ws/install/setup.bash ]; then
-    source /root/ldlidar_ws/install/setup.bash
+# Source workspace if it exists
+if [ -f /root/ros2_ws/install/setup.bash ]; then
+    source /root/ros2_ws/install/setup.bash
 fi
 
-# Execute any command passed to the container
+# Run Python service immediately
+python3 /root/ros2_ws/src/run_service.py
+
+# Continue with default command
 exec "$@"
