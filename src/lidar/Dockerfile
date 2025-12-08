@@ -37,6 +37,6 @@ WORKDIR /root/ldlidar_ws
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install"
 
 # Source the workspace in entrypoint
-COPY ./entrypoint.sh /entrypoint.sh
+COPY /src/lidar/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]

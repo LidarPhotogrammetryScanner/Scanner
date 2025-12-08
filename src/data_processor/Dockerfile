@@ -17,8 +17,8 @@ WORKDIR /root/ros2_ws
 RUN mkdir -p src
 
 # Copy service and entrypoint
-COPY ./data_service.py /root/ros2_ws/src/data_service.py
-COPY ./entrypoint.sh /entrypoint.sh
+COPY /src/data_processor/data_service.py /root/ros2_ws/src/data_service.py
+COPY /src/data_processor/entrypoint.sh /entrypoint.sh
 
 # Build workspace (empty workspace is fine)
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"

@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   lidar:
-    build: ./src/lidar
+    build:
+      context: .
+      dockerfile: src/lidar/Dockerfile
     container_name: lidar
     environment:
       - ROS_DOMAIN_ID=0
@@ -11,7 +13,9 @@ services:
     entrypoint: /entrypoint.sh
 
   photogrammetry:
-    build: ./src/photogrammetry
+    build:
+      context: .
+      dockerfile: src/photogrammetry/Dockerfile
     container_name: photogrammetry
     environment:
       - ROS_DOMAIN_ID=0
@@ -20,7 +24,9 @@ services:
     entrypoint: /entrypoint.sh
 
   servo:
-    build: ./src/servo
+    build:
+      context: .
+      dockerfile: src/servo/Dockerfile
     container_name: servo
     environment:
       - ROS_DOMAIN_ID=0
@@ -29,7 +35,9 @@ services:
     entrypoint: /entrypoint.sh
 
   data_processor:
-    build: ./src/data_processor
+    build:
+      context: .
+      dockerfile: src/data_processor/Dockerfile
     container_name: data_processor
     environment:
       - ROS_DOMAIN_ID=0
@@ -38,7 +46,9 @@ services:
     entrypoint: /entrypoint.sh
 
   orchestrator:
-    build: ./src/orchestrator
+    build:
+      context: .
+      dockerfile: src/orchestrator/Dockerfile
     container_name: orchestrator
     depends_on:
       - data_processor

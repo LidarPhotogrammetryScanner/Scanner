@@ -30,7 +30,7 @@ WORKDIR /root/ros2_ws
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"
 
 # Copy entrypoint script and set entrypoint
-COPY ./entrypoint.sh /entrypoint.sh
+COPY /src/photogrammetry/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
 # Default command
