@@ -29,19 +29,19 @@ class ServiceClient(Node):
         return self._service_clients[service_name]
 
     def call(self, service_name: str, **request_fields):
-        time.sleep(0.2) # prevents the ROS2 executor from getting overloaded when called in rappid succession.
-        """
-        Call the service with any request fields supplied via keyword args.
-        Service name can be passed dynamically.
-        """
+        time.sleep(0.2)
         client = self._get_client(service_name)
         req = self.service_type.Request()
 
-        # Apply dynamic fields
-        for key, value in request_fields.items():
-            if not hasattr(req, key):
-                raise AttributeError(f"Request has no field '{key}'")
-            setattr(req, key, value)
+        # New simplified JSON passthrough
+        if 'request' in request_fields:
+            req.request = request_fields['request']
+        else:
+            # fallback if someone wants typed fields
+            for key, value in request_fields.items():
+                if not hasattr(req, key):
+                    raise AttributeError(f"Request has no field '{key}'")
+                setattr(req, key, value)
 
         future = client.call_async(req)
         rclpy.spin_until_future_complete(self, future)

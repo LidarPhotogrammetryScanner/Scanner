@@ -7,10 +7,15 @@ set -e
 # Source ROS 2 Kilted setup
 source /opt/ros/kilted/setup.bash
 
-# Source the workspace (so the ldlidar_ros2 package is found)
-if [ -f /root/ldlidar_ws/install/setup.bash ]; then
-    source /root/ldlidar_ws/install/setup.bash
+# Source the workspace (so scanner_pkg and domain modules are found)
+if [ -f /root/ros2_ws/install/setup.bash ]; then
+    source /root/ros2_ws/install/setup.bash
 fi
+
+export ROS_DOMAIN_ID=0
+
+# Run your Python script directly
+python3 /root/ros2_ws/src/lidar/lidar_service.py
 
 # Execute any command passed to the container
 exec "$@"
