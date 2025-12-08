@@ -1,8 +1,10 @@
 import json
+import random
+import time
+from wsgiref.util import request_uri
 
 import rclpy
 from domain.communication.service_client import ServiceClient
-from domain.dto.Point import Point
 from src.orchestrator.scan_data import ScanData
 from std_srvs.srv import Trigger
 import config.config as config
@@ -19,16 +21,19 @@ class Orchestrator:
         rclpy.init()
 
         self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
-        self.servoClient = ServiceClient(node_name="servo", service_type=Trigger)
-        self.photogrammetryClient = ServiceClient(node_name="photogrammetry", service_type=Trigger)
+        self.servoClient = ServiceClient(node_name="servo", service_type=JsonIO)
+        self.photogrammetryClient = ServiceClient(node_name="photogrammetry", service_type=JsonIO)
         self.lidarClient = ServiceClient(node_name="LidarClient", service_type=JsonIO)
         self._scan_data = ScanData()
 
     def run(self):
-        self._scan_data.lidar_data.setdefault(0, []).append(Point())
-        for i in range(config.STEPS_PER_ROTATION):
-            self.measure(i)
+        time.sleep(5)
+        # self.reset_servo()
 
+        for i in range(config.STEPS_PER_ROTATION):
+
+            self.measure(i)
+        # print(self._scan_data.lidar_data)
         # for i in range(20):
         #     print(f"Iteration {i + 1}")
         #
@@ -46,24 +51,35 @@ class Orchestrator:
         # print("Orchestrator finished", flush=True)
 
 
-
     def measure(self, step: int) -> None:
         # # self.reset_servo()
         # payload = {"step": step}
         # response = self.lidarClient.call('/lidar/measure', in_json=json.dumps(payload))
         # # self._scan_data.lidar_data[step] = response.
         # print(response)
-        req = {
-            "step": 123.4  # whatever
-        }
+        time.sleep(random.uniform(5, 5))
+        self.step_servo(step)
+        time.sleep(random.uniform(5, 5))
+        self.lidar_scan(step)
+        time.sleep(random.uniform(5, 5))
+        self.photogrammetry_measure(step)
 
-        resp = self.lidarClient.call('/lidar/measure', request=json.dumps(req))
+    def reset_servo(self) -> None:
+        payload = {"step": 0}
+        response = self.servoClient.call('/servo/reset', request=json.dumps(payload))
 
-        points = json.loads(resp.response)
-        # print(points)
+    def step_servo(self, step: int) -> None:
+        payload = {"step": step}
+        response = self.servoClient.call('/servo/step', request=json.dumps(payload))
 
-    def reset_servo(self):
-        self.servoClient.call('/servo/reset')
+    def photogrammetry_measure(self, step: int) -> None:
+        payload = {"step": step}
+        response = self.servoClient.call('/photogrammetry/measure', request=json.dumps(payload))
+
+    def lidar_scan(self, step: int) -> None:
+        payload = { "step": step }
+        response = self.lidarClient.call('/lidar/measure', request=json.dumps(payload))
+        self._scan_data.lidar_data[step] = response.response
 
 if __name__ == "__main__":
     main()
