@@ -1,70 +1,53 @@
-#!/usr/bin/env python3
 import rclpy
-from rclpy.node import Node
+from domain.communication.service_client import ServiceClient
+from domain.dto.Point import Point
+from src.orchestrator.scan_data import ScanData
 from std_srvs.srv import Trigger
-from domain.communication.service_caller import ServiceCaller
+import config.config as config
 
-class Orchestrator(Node):
+def main():
+    orchestrator = Orchestrator()
+    orchestrator.run()
+
+
+class Orchestrator:
+
     def __init__(self):
-        super().__init__('orchestrator')
-        self.cli = self.create_client(Trigger, '/data/process')
-        while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('/data/process service not available, waiting...')
-        self.get_logger().info('Connected to /data/process')
+        rclpy.init()
 
-    # def do_service_call(self):
-    #     """Single reusable service call function that returns the result message."""
-    #     req = Trigger.Request()
-    #     future = self.cli.call_async(req)
-    #     rclpy.spin_until_future_complete(self, future)
-    #
-    #     if future.result() is not None:
-    #         msg = future.result().message
-    #         self.get_logger().info(f'Result from data_processor: {msg}')
-    #         print(f'Result from data_processor: {msg}', flush=True)
-    #         return msg
-    #     else:
-    #         self.get_logger().error('Service call failed')
-    #         return None
+        self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
+        self.servoClient = ServiceClient(node_name="servo", service_type=Trigger)
+        self.photogrammetryClient = ServiceClient(node_name="photogrammetry", service_type=Trigger)
+        self.lidarClient = ServiceClient(node_name="LidarClient", service_type=Trigger)
+        self.DataProcessingClient = ServiceClient(node_name="data", service_type=Trigger)
+        self._scan_data = ScanData()
+
+    def run(self):
+        self._scan_data.lidar_data.setdefault(0, []).append(Point())
+        for i in range(config.STEPS_PER_ROTATION):
+            self.measure(i)
+
+        for i in range(20):
+            print(f"Iteration {i + 1}")
+
+            print("=== CALL 1 ===")
+            result1 = self.orchestratorClient.call('/data/process')
+            if result1:
+                print(f"CALL 1 returned message: {result1.message}")
+
+        print("=== CALL 2 ===")
+        result2 = self.orchestratorClient.call('/data/process')
+        if result2:
+            print(f"CALL 2 returned message: {result2.message}")
+
+        rclpy.shutdown()
+        print("Orchestrator finished", flush=True)
 
 
-# def main(args=None):
-#     rclpy.init(args=args)
-#     node = Orchestrator()
-#
-#     print("=== CALL 1 ===", flush=True)
-#     result_1 = node.do_service_call()
-#     print(f"CALL 1 returned: {result_1}", flush=True)
-#
-#     print("=== CALL 2 ===", flush=True)
-#     result_2 = node.do_service_call()
-#     print(f"CALL 2 returned: {result_2}", flush=True)
-#
-#     rclpy.shutdown()
-#     print("Orchestrator finished", flush=True)
 
-def main(args=None):
-    rclpy.init(args=args)
+    def measure(self, i: int) -> None:
 
-    caller = ServiceCaller(
-        node_name="orchestrator",
-        service_type=Trigger,
-        service_name="/data/process"
-    )
-
-    print("=== CALL 1 ===")
-    result1 = caller.call()
-    if result1:
-        print(f"CALL 1 returned message: {result1.message}")
-
-    print("=== CALL 2 ===")
-    result2 = caller.call()
-    if result2:
-        print(f"CALL 2 returned message: {result2.message}")
-
-    rclpy.shutdown()
-    print("Orchestrator finished", flush=True)
-
+        return
 
 if __name__ == "__main__":
     main()

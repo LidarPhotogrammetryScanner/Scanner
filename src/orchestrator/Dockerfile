@@ -17,9 +17,14 @@ WORKDIR /root/ros2_ws
 RUN mkdir -p src
 
 # Copy orchestrator node and entrypoint
-COPY /src/orchestrator/orchestrator_service.py /root/ros2_ws/src/orchestrator_service.py
+#COPY /src/orchestrator/orchestrator_service.py /root/ros2_ws/src/orchestrator_service.py
+COPY domain /root/ros2_ws/domain
+COPY config /root/ros2_ws/config
+COPY /src/orchestrator /root/ros2_ws/src/orchestrator
 COPY /src/orchestrator/entrypoint.sh /entrypoint.sh
-COPY domain /root/ros2_ws/src/domain
+
+# Fix Python imports
+ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
 
 # Build workspace
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"
