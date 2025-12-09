@@ -23,32 +23,21 @@ class Orchestrator:
         self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
         self.servoClient = ServiceClient(node_name="servo", service_type=JsonIO)
         self.photogrammetryClient = ServiceClient(node_name="photogrammetry", service_type=JsonIO)
-        self.lidarClient = ServiceClient(node_name="LidarClient", service_type=JsonIO)
+        self.lidarClient = ServiceClient(node_name="lidar", service_type=JsonIO)
+        self.dataClient = ServiceClient(node_name="data", service_type=JsonIO)
         self._scan_data = ScanData()
 
     def run(self):
+
         time.sleep(5)
         # self.reset_servo()
 
         for i in range(config.STEPS_PER_ROTATION):
-
             self.measure(i)
-        # print(self._scan_data.lidar_data)
-        # for i in range(20):
-        #     print(f"Iteration {i + 1}")
-        #
-        #     print("=== CALL 1 ===")
-        #     result1 = self.orchestratorClient.call('/data/process')
-        #     if result1:
-        #         print(f"CALL 1 returned message: {result1.message}")
-        #
-        # print("=== CALL 2 ===")
-        # result2 = self.orchestratorClient.call('/data/process')
-        # if result2:
-        #     print(f"CALL 2 returned message: {result2.message}")
-        #
-        # rclpy.shutdown()
-        # print("Orchestrator finished", flush=True)
+
+        payload = {"step": 0}
+        response = self.dataClient.call('/data/process', request=json.dumps(payload))
+
 
 
     def measure(self, step: int) -> None:

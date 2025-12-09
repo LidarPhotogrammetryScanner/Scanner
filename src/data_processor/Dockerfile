@@ -17,12 +17,21 @@ WORKDIR /root/ros2_ws
 RUN mkdir -p src
 
 # Copy service and entrypoint
-COPY /src/data_processor/data_service.py /root/ros2_ws/src/data_service.py
-COPY /src/data_processor/entrypoint.sh /entrypoint.sh
+COPY domain /root/ros2_ws/domain
+COPY scanner_pkg /root/ros2_ws/src/scanner_pkg
+COPY config /root/ros2_ws/config
+COPY src/data_processor /root/ros2_ws/src/data_processor
+COPY src/data_processor/entrypoint.sh /entrypoint.sh
 
-# Build workspace (empty workspace is fine)
-RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"
+# Fix Python imports
+ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
+
+# Build workspace
+RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install  || true"
+
+# Source workspace in entrypoint to fix Python imports
+ENV PYTHONPATH=/root/ros2_ws/install:$PYTHONPATH
 
 # Entrypoint and default CMD
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["ros2", "run", "data_service", "data_service"]
+CMD ["ros2", "run", "data_processor_service", "data_processor_service"]

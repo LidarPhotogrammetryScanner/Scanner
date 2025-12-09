@@ -1,22 +1,21 @@
 #!/bin/bash
+# ros_entrypoint.sh for data node
+
+# Exit on error
 set -e
 
-# Source ROS 2
+# Source ROS 2 Kilted setup
 source /opt/ros/kilted/setup.bash
 
-# Source workspace if it exists
+# Source the workspace (so scanner_pkg and domain modules are found)
 if [ -f /root/ros2_ws/install/setup.bash ]; then
     source /root/ros2_ws/install/setup.bash
 fi
 
-
-#export ROS_DISCOVERY_SERVER=discovery_server:11811
-
 export ROS_DOMAIN_ID=0
 
 # Run your Python script directly
-python3 /root/ros2_ws/src/data_service.py
+python3 /root/ros2_ws/src/data_processor/data_service.py
 
-
-# Execute CMD (default is data_service node)
+# Execute any command passed to the container
 exec "$@"
