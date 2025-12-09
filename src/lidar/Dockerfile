@@ -22,6 +22,7 @@ COPY scanner_pkg /root/ros2_ws/src/scanner_pkg
 COPY config /root/ros2_ws/config
 COPY src/lidar /root/ros2_ws/src/lidar
 COPY src/lidar/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Fix Python imports
 ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
