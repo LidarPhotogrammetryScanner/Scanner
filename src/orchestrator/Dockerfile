@@ -26,5 +26,5 @@ ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
 
 RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install"
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["ros2", "run", "orchestrator_service", "orchestrator_service"]
