@@ -38,5 +38,6 @@ RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-i
 
 # Source the workspace in entrypoint
 COPY ./ros_entrypoint.sh /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]

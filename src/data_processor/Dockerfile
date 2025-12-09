@@ -23,6 +23,7 @@ COPY config /root/ros2_ws/config
 COPY src/data_processor /root/ros2_ws/src/data_processor
 COPY src/data_processor/entrypoint.sh /entrypoint.sh
 
+RUN chmod +x /entrypoint.sh
 # Fix Python imports
 ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
 
