@@ -7,7 +7,7 @@ from rclpy.node import Node
 
 from config import config
 from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import Point
+from domain.dto.Point import DataPoint
 
 
 class ServoService(Node):
