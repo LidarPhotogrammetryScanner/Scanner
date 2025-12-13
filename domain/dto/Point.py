@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 @dataclass
-class Point:
-    x: float = 0.0
-    y: float = 0.0
-    z: float = 0.0
+class DataPoint:
+    angle: float = 0.0 #angle in radians
+    radius: float = 0.0 #angle in meters

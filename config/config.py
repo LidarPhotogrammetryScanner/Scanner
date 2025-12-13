@@ -1,5 +1,5 @@
 #general
-STEPS_PER_ROTATION = 1
+STEPS_PER_ROTATION = 360
 
 #orchestrator
 
