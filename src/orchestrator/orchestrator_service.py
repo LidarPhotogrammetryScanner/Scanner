@@ -18,6 +18,7 @@ def main():
 class Orchestrator:
 
     def __init__(self):
+        time.sleep(random.uniform(5, 5))
         rclpy.init()
 
         self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
