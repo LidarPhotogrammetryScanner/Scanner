@@ -1,7 +1,9 @@
-FROM osrf/ros:kilted-desktop
+FROM --platform=linux/arm64 ros:kilted-ros-core
 
-# Install essential build tools
+# Install essential build tools and Python GPIO library
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
     python3-colcon-common-extensions \
     git \
     libxcb-xinerama0 \
@@ -10,7 +12,12 @@ RUN apt-get update && apt-get install -y \
     mesa-utils \
     ros-kilted-rmw-cyclonedds-cpp \
     ros-kilted-cyclonedds \
+    python3-pip \
+    python3-rpi.gpio \
     && rm -rf /var/lib/apt/lists/*
+
+# Install RpiMotorLib
+RUN pip3 install --break-system-packages RpiMotorLib
 
 # Create workspace
 WORKDIR /root/ros2_ws
@@ -28,7 +35,7 @@ RUN chmod +x /entrypoint.sh
 ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
 
 # Build workspace
-RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install  || true"
+RUN /bin/bash -lc "source /opt/ros/kilted/setup.bash && colcon build --symlink-install || true"
 
 # Source workspace in entrypoint to fix Python imports
 ENV PYTHONPATH=/root/ros2_ws/install:$PYTHONPATH

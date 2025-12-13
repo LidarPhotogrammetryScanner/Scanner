@@ -1,6 +1,8 @@
-FROM osrf/ros:kilted-desktop
+FROM --platform=linux/arm64 ros:kilted-ros-core
 
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
     python3-colcon-common-extensions \
     git \
     libxcb-xinerama0 \

@@ -33,6 +33,9 @@ services:
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
+    privileged: true          # Needed for GPIO access
+    devices:
+      - /dev/gpiomem:/dev/gpiomem   # Expose GPIO memory to container
 
   data_processor:
     build:

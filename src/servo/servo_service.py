@@ -1,42 +1,50 @@
 import json
-import random
-import time
-
 import rclpy
 from rclpy.node import Node
+from RpiMotorLib import RpiMotorLib
+import RPi.GPIO as GPIO
 
 from config import config
-from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import DataPoint
+from scanner_pkg.srv import JsonIO  # your custom service
 
+# Define stepper motor pins
+GPIO_pins = [17, 18, 27, 22]  # IN1, IN2, IN3, IN4
+
+# Initialize motor
+motor = RpiMotorLib.BYJMotor("MyMotor", "28BYJ-48")
+
+def step_motor(steps, delay=0.1):
+    # Move motor clockwise
+    motor.motor_run(GPIO_pins, 0.001, 512, True, False, "half", 0.001)
+
+def reset_motor():
+    GPIO.cleanup()
 
 class ServoService(Node):
     def __init__(self):
         super().__init__('servo_service')
 
-        # Create service using your custom JsonIO
-        self.srv = self.create_service(JsonIO, '/servo/step', self.handle_servo_step)
-        self.srvr = self.create_service(JsonIO, '/servo/reset', self.handle_servo_reset)
-
-        self.get_logger().info('servo JsonIO service is ready!')
+        self.srv_step = self.create_service(JsonIO, '/servo/step', self.handle_servo_step)
+        self.srv_reset = self.create_service(JsonIO, '/servo/reset', self.handle_servo_reset)
+        self.get_logger().info('ServoService is ready!')
 
     def handle_servo_step(self, request, response):
-        # Parse the step from request JSON
         req_json = json.loads(request.request)
         step = req_json.get("step", None)
         if step is None:
             self.get_logger().error("Missing 'step' in request")
             response.response = json.dumps(False)
             return response
-        angle = (float(step) / config.STEPS_PER_ROTATION) * 360
-        print(f"Moving servo to {angle:.2f} degrees")
-        response.response = json.dumps(True)  # set the response
+
+        step_motor(512, delay=0.001)
+        self.get_logger().info(f"Moved stepper {step} steps")
+        response.response = json.dumps(True)
         return response
 
     def handle_servo_reset(self, request, response):
-        # Parse the step from request JSON
-        print("resetting servo to 0 degrees")
-        response.response = json.dumps(True)  # set the response
+        reset_motor()
+        self.get_logger().info("Stepper reset (GPIO cleaned)")
+        response.response = json.dumps(True)
         return response
 
 
