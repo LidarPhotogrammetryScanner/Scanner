@@ -5,6 +5,7 @@ from RpiMotorLib import RpiMotorLib
 import RPi.GPIO as GPIO
 
 from config import config
+from config.config import STEPS_PER_ROTATION
 from scanner_pkg.srv import JsonIO  # your custom service
 
 # Define stepper motor pins
@@ -16,12 +17,14 @@ motor = RpiMotorLib.BYJMotor("MyMotor", "28BYJ-48")
 def step_motor(steps, delay=0.1):
     # Move motor clockwise
     print("STEPPING MOTOR NOW")
-    motor.motor_run(GPIO_pins, 0.001, 512, True, False, "half", 0.001)
+    motor.motor_run(GPIO_pins, 0.001, 512 / STEPS_PER_ROTATION, True, False, "half", 0.001)
 
 def reset_motor():
     GPIO.cleanup()
 
 class ServoService(Node):
+
+
     def __init__(self):
         super().__init__('servo_service')
 
@@ -37,8 +40,8 @@ class ServoService(Node):
             response.response = json.dumps(False)
             return response
 
-        step_motor(512, delay=0.001)
-        self.get_logger().info(f"Moved stepper {step} steps")
+        step_motor(step, delay=0.001)
+        self.get_logger().info(f"Moved stepper to step {step}")
         response.response = json.dumps(True)
         return response
 
