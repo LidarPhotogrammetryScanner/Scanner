@@ -9,15 +9,15 @@ from domain.dto.Point import DataPoint
 from scanner_pkg.srv import JsonIO
 from sensor_msgs.msg import LaserScan
 from threading import Event
+from dataclasses import dataclass
+import numpy as np
 
 class LidarService(Node):
     def __init__(self):
         super().__init__('lidar_service')
-
-        # Reentrant so callbacks can run simultaneously
         self.cb_group = ReentrantCallbackGroup()
 
-        # Persistent service
+        # Service
         self.srv = self.create_service(
             JsonIO,
             '/lidar/measure',
@@ -44,26 +44,25 @@ class LidarService(Node):
         self.get_logger().info('Lidar JsonIO service is ready!')
 
     def scan_callback(self, msg: LaserScan):
-        # Store the latest scan and notify any waiting handler
+        # Store latest scan and notify waiting handler
         self.latest_scan = msg
         self.scan_event.set()
 
     def handle_process(self, request, response):
         try:
             request_data = json.loads(request.request)
-            z_value = float(request_data["step"])
+            step = float(request_data["step"])  # turntable rotation, degrees
         except Exception as e:
             response.response = json.dumps({"error": f"Invalid request: {str(e)}"})
             return response
 
-        self.get_logger().info(f"Waiting for one LiDAR scan at step {z_value}...")
+        self.get_logger().info(f"Waiting for one LiDAR scan at step {step}...")
 
-        # Clear the event
+        # Wait for scan
         self.scan_event.clear()
         start_time = time.time()
-        timeout = 10.0  # seconds
+        timeout = 10.0
 
-        # Spin until scan arrives
         while not self.scan_event.is_set():
             rclpy.spin_once(self, timeout_sec=0.01)
             if time.time() - start_time > timeout:
@@ -72,15 +71,19 @@ class LidarService(Node):
 
         # Got scan
         scan_msg = self.latest_scan
-        points : DataPoint = []
-        angle = scan_msg.angle_min
-        for r in scan_msg.ranges:
-            points.append({"angle": angle, "radius": r})  # .nan handling later
-            angle += scan_msg.angle_increment
+        original_ranges = np.array(scan_msg.ranges)
+        original_angles = np.linspace(0, 360, num=len(original_ranges), endpoint=False)
 
-        response.response = json.dumps(points)
-        print(points)
-        self.get_logger().info(f"Returned {len(points)} points at Z={z_value}")
+        # Resample to exactly 360 vertical points
+        target_angles = np.arange(0, 360)
+        interpolated_ranges = np.interp(target_angles, original_angles, original_ranges)
+
+        # Build DataPoint list (angle/radius only)
+        points = [DataPoint(angle=float(a), radius=float(r), step=step) for a, r in zip(target_angles, interpolated_ranges)]
+
+        # Return JSON
+        response.response = json.dumps([dp.__dict__ for dp in points])
+        self.get_logger().info(f"Returned {len(points)} vertical points at step={step}")
         return response
 
 
