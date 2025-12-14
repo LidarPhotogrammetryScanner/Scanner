@@ -50,8 +50,8 @@ class Orchestrator:
         # self.photogrammetry_measure(step)
         time.sleep(random.uniform(5, 5))
         self.step_servo(step)
-        # time.sleep(random.uniform(5, 5))
-        # self.lidar_scan(step)
+        time.sleep(random.uniform(5, 5))
+        self.lidar_scan(step)
         # time.sleep(random.uniform(5, 5))
         # self.photogrammetry_measure(step)
 
