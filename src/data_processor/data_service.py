@@ -1,4 +1,4 @@
-from ast import List
+from typing import Dict, List
 import json
 import math
 
@@ -23,25 +23,7 @@ class DataProcessorService(Node):
         # Parse the step from request JSON
         req_json = json.loads(request.request)
         lidar_data_dict = req_json.get("lidar_data", None)
-        # lidar_data_dict should be Dict[float, List[LaserScan]]
-        lidar_data = {}
-        if lidar_data_dict is not None:
-            for step_str, laser_scan_list in lidar_data_dict.items():
-                # Convert step from str to float
-                step = float(step_str)
-                
-                # Handle case where laser_scan_list is a JSON string (from lidar service response)
-                if isinstance(laser_scan_list, str):
-                    laser_scan_list = json.loads(laser_scan_list)
-                
-                scans = [
-                    LaserScan(
-                        angle=scan["angle"],
-                        distance=scan["distance"]
-                    ) if isinstance(scan, dict) else scan
-                    for scan in laser_scan_list
-                ]
-                lidar_data[step] = scans
+        lidar_data = request_json_to_lidar_data(lidar_data_dict)
         if not lidar_data:
             self.get_logger().error("Missing 'lidar_data' in request")
             response.response = json.dumps(False)
@@ -55,11 +37,35 @@ class DataProcessorService(Node):
         
         pcd_file = points_to_pcd(points)
 
-        with open(f"lidar_data_{step}.pcd", "w") as f:
+        # Write to mounted volume directory accessible from host
+        output_path = "/output/lidar_data.pcd"
+        with open(output_path, "w") as f:
             f.write(pcd_file)
+        
+        self.get_logger().info(f"PCD file written to {output_path}")
             
         response.response = json.dumps(True)  # set the response
         return response
+
+def request_json_to_lidar_data(lidar_data_dict) -> Dict[float, List[LaserScan]]:
+    lidar_data = {}
+    if lidar_data_dict is not None:
+        for step_str, laser_scan_list in lidar_data_dict.items():
+            step = float(step_str)
+            
+            if isinstance(laser_scan_list, str):
+                laser_scan_list = json.loads(laser_scan_list)
+            
+            scans = [
+                LaserScan(
+                    angle=scan["angle"],
+                    distance=scan["distance"]
+                ) if isinstance(scan, dict) else scan
+                for scan in laser_scan_list
+            ]
+            lidar_data[step] = scans
+            
+    return lidar_data
 
 def laser_data_to_point(laser_scan: LaserScan, servo_angle: float) -> Point:
     ''' Converts a laser scan and servo angle to a 3D point in the world coordinate system. '''

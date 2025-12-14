@@ -41,6 +41,8 @@ services:
     container_name: data_processor
     environment:
       - ROS_DOMAIN_ID=0
+    volumes:
+      - ./output:/output
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
