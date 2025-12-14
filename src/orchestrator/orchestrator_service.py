@@ -35,7 +35,9 @@ class Orchestrator:
         for i in range(config.STEPS_PER_ROTATION):
             self.measure(i)
 
-        payload = {"step": 0}
+        payload = {
+            "lidar_data": self._scan_data.lidar_data,
+        }
         response = self.dataClient.call('/data/process', request=json.dumps(payload))
 
 

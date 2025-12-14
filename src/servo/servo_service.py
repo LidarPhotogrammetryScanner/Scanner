@@ -1,13 +1,10 @@
 import json
-import random
-import time
 
 import rclpy
 from rclpy.node import Node
 
 from config import config
-from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import DataPoint
+from scanner_pkg.srv import JsonIO
 
 
 class ServoService(Node):

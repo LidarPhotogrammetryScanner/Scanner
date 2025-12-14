@@ -4,7 +4,7 @@ import random
 import rclpy
 from rclpy.node import Node
 from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import DataPoint
+from domain.dto.LaserScan import LaserScan
 
 class LidarService(Node):
     def __init__(self):
@@ -28,9 +28,9 @@ class LidarService(Node):
 
         # Generate 360 fake points
         points = [
-            DataPoint(
+            LaserScan(
                 angle=random.uniform(-1000.0, 1000.0),
-                radius=random.uniform(-1000.0, 1000.0)
+                distance=random.uniform(-1000.0, 1000.0)
             )
             for _ in range(360)
         ]
@@ -41,7 +41,7 @@ class LidarService(Node):
         # Write JSON output into the response string
         response.response = json.dumps(points_json)
 
-        self.get_logger().info(f'Processed request: {len(points)} points at Z={z_value} cm.')
+        self.get_logger().info(f'Processed request: {len(points)} points at step {z_value}.')
 
         return response
 

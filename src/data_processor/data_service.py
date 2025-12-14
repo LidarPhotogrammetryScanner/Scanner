@@ -1,16 +1,14 @@
+from ast import List
 import json
-import random
-import time
+import math
 
+from domain.dto.LaserScan import LaserScan
+from domain.dto.Point import Point
 import rclpy
 from rclpy.node import Node
 
 from config import config
-from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import DataPoint
-import time
-import random
-
+from scanner_pkg.srv import JsonIO
 
 class DataProcessorService(Node):
     def __init__(self):
@@ -24,15 +22,81 @@ class DataProcessorService(Node):
     def handle_process(self, request, response):
         # Parse the step from request JSON
         req_json = json.loads(request.request)
-        step = req_json.get("step", None)
-        if step is None:
-            self.get_logger().error("Missing 'step' in request")
+        lidar_data_dict = req_json.get("lidar_data", None)
+        # lidar_data_dict should be Dict[float, List[LaserScan]]
+        lidar_data = {}
+        if lidar_data_dict is not None:
+            for step_str, laser_scan_list in lidar_data_dict.items():
+                # Convert step from str to float
+                step = float(step_str)
+                
+                # Handle case where laser_scan_list is a JSON string (from lidar service response)
+                if isinstance(laser_scan_list, str):
+                    laser_scan_list = json.loads(laser_scan_list)
+                
+                scans = [
+                    LaserScan(
+                        angle=scan["angle"],
+                        distance=scan["distance"]
+                    ) if isinstance(scan, dict) else scan
+                    for scan in laser_scan_list
+                ]
+                lidar_data[step] = scans
+        if not lidar_data:
+            self.get_logger().error("Missing 'lidar_data' in request")
             response.response = json.dumps(False)
             return response
         print("processing data")
+        points = []
+        for step, laser_scans in lidar_data.items():
+            for laser_scan in laser_scans:
+                point = laser_data_to_point(laser_scan, step)
+                points.append(point)
+        
+        pcd_file = points_to_pcd(points)
+
+        with open(f"lidar_data_{step}.pcd", "w") as f:
+            f.write(pcd_file)
+            
         response.response = json.dumps(True)  # set the response
         return response
 
+def laser_data_to_point(laser_scan: LaserScan, servo_angle: float) -> Point:
+    ''' Converts a laser scan and servo angle to a 3D point in the world coordinate system. '''
+
+    horizontal_distance = laser_scan.distance * math.cos(laser_scan.angle)
+    vertical_distance = laser_scan.distance * math.sin(laser_scan.angle)
+
+    x = horizontal_distance * math.cos(servo_angle)
+    y = horizontal_distance * math.sin(servo_angle)
+    z = vertical_distance
+
+    return Point(
+        x=x,
+        y=y,
+        z=z,
+    )
+
+def points_to_pcd(points) -> str:
+    ''' Converts a list of points to a PCD file. '''
+    
+    pcd_file = f"""PCD_FILE
+VERSION .7
+FIELDS x y z
+SIZE 4 4 4
+TYPE F F F
+COUNT 1 1 1
+WIDTH 1
+HEIGHT 1
+VIEWPOINT 0 0 0 1 0 0 0
+POINTS {len(points)}
+DATA ascii
+"""
+
+    for point in points:
+        pcd_file += f"\n{point.x} {point.y} {point.z}"
+
+    return pcd_file
 
 def main(args=None):
     rclpy.init(args=args)
