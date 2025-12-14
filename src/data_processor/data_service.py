@@ -47,11 +47,11 @@ class DataProcessorService(Node):
         response.response = json.dumps(True)  # set the response
         return response
 
-def request_json_to_lidar_data(lidar_data_dict) -> Dict[float, List[LaserScan]]:
+def request_json_to_lidar_data(lidar_data_dict) -> Dict[int, List[LaserScan]]:
     lidar_data = {}
     if lidar_data_dict is not None:
         for step_str, laser_scan_list in lidar_data_dict.items():
-            step = float(step_str)
+            step = int(step_str)
             
             if isinstance(laser_scan_list, str):
                 laser_scan_list = json.loads(laser_scan_list)
@@ -67,11 +67,14 @@ def request_json_to_lidar_data(lidar_data_dict) -> Dict[float, List[LaserScan]]:
             
     return lidar_data
 
-def laser_data_to_point(laser_scan: LaserScan, servo_angle: float) -> Point:
+def laser_data_to_point(laser_scan: LaserScan, step: int) -> Point:
     ''' Converts a laser scan and servo angle to a 3D point in the world coordinate system. '''
 
-    horizontal_distance = laser_scan.distance * math.cos(laser_scan.angle)
-    vertical_distance = laser_scan.distance * math.sin(laser_scan.angle)
+    servo_angle_deg = (float(step) / config.STEPS_PER_ROTATION) * 360
+    servo_angle = math.radians(servo_angle_deg)
+
+    horizontal_distance = laser_scan.distance * math.sin(laser_scan.angle)
+    vertical_distance = laser_scan.distance * math.cos(laser_scan.angle)
 
     x = horizontal_distance * math.cos(servo_angle)
     y = horizontal_distance * math.sin(servo_angle)

@@ -1,4 +1,6 @@
+import csv
 import json
+import os
 import random
 
 import rclpy
@@ -19,29 +21,34 @@ class LidarService(Node):
         # request.request is a JSON string
         try:
             request_data = json.loads(request.request)
-            z_value = float(request_data["step"])
+            step = float(request_data["step"])
         except Exception as e:
             response.response = json.dumps({
                 "error": f"Invalid request: {str(e)}"
             })
             return response
 
-        # Generate 360 fake points
-        points = [
-            LaserScan(
-                angle=random.uniform(-1000.0, 1000.0),
-                distance=random.uniform(-1000.0, 1000.0)
-            )
-            for _ in range(360)
-        ]
+        # Read mock data from lidar_scans.csv
+        # Get the directory where this script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(script_dir, 'lidar_scans.csv')
+        
+        laser_scans = []
+        with open(csv_path, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header row
+            for row in reader:
+                distance, angle = row
+                laser_scans.append(LaserScan(distance=float(distance), angle=float(angle)))
+
 
         # Convert points to JSON
-        points_json = [point.__dict__ for point in points]
+        laser_scans_json = [laser_scan.__dict__ for laser_scan in laser_scans]
 
         # Write JSON output into the response string
-        response.response = json.dumps(points_json)
+        response.response = json.dumps(laser_scans_json)
 
-        self.get_logger().info(f'Processed request: {len(points)} points at step {z_value}.')
+        self.get_logger().info(f'Processed request: {len(laser_scans)} laser scans at step {step}.')
 
         return response
 

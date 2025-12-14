@@ -61,7 +61,7 @@ class Orchestrator:
 
     def step_servo(self, step: int) -> None:
         payload = {"step": step}
-        response = self.servoClient.call('/servo/step', request=json.dumps(payload))
+        response = self.servoClient.call('/servo/step', request=json.dumps(payload))\
 
     def photogrammetry_measure(self, step: int) -> None:
         payload = {"step": step}
