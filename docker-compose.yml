@@ -8,6 +8,7 @@ services:
     container_name: lidar
     environment:
       - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
@@ -23,7 +24,7 @@ services:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     environment:
       - ROS_DOMAIN_ID=0
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     privileged: true
     command: ros2 launch ldlidar_ros2 ld14p.launch.py
     tty: true
@@ -37,6 +38,7 @@ services:
     container_name: photogrammetry
     environment:
       - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
@@ -49,6 +51,7 @@ services:
     container_name: servo
     environment:
       - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
@@ -64,6 +67,7 @@ services:
     container_name: data_processor
     environment:
       - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
@@ -78,6 +82,7 @@ services:
       - data_processor
     environment:
       - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh

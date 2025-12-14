@@ -47,12 +47,13 @@ class Orchestrator:
         # response = self.lidarClient.call('/lidar/measure', in_json=json.dumps(payload))
         # # self._scan_data.lidar_data[step] = response.
         # print(response)
+        # self.photogrammetry_measure(step)
         time.sleep(random.uniform(5, 5))
         self.step_servo(step)
-        time.sleep(random.uniform(5, 5))
-        self.lidar_scan(step)
-        time.sleep(random.uniform(5, 5))
-        self.photogrammetry_measure(step)
+        # time.sleep(random.uniform(5, 5))
+        # self.lidar_scan(step)
+        # time.sleep(random.uniform(5, 5))
+        # self.photogrammetry_measure(step)
 
     def reset_servo(self) -> None:
         payload = {"step": 0}
@@ -64,7 +65,9 @@ class Orchestrator:
 
     def photogrammetry_measure(self, step: int) -> None:
         payload = {"step": step}
-        response = self.servoClient.call('/photogrammetry/measure', request=json.dumps(payload))
+        print(f"Sending photogrammetry request for step {step}")
+        response = self.photogrammetryClient.call('/photogrammetry/measure', request=json.dumps(payload))
+        print("Photogrammetry response:", response)
 
     def lidar_scan(self, step: int) -> None:
         payload = { "step": step }

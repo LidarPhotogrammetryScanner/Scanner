@@ -1,22 +1,33 @@
 #!/bin/bash
 set -e
 
-# Source ROS2
+# -----------------------------
+# Source ROS 2
+# -----------------------------
 source /opt/ros/kilted/setup.bash
 
-# Source workspace if exists
 if [ -f /root/ldlidar_ws/install/local_setup.bash ]; then
     source /root/ldlidar_ws/install/local_setup.bash
 fi
 
-# --- CLEAN STALE ROS2 / DDS STATE ---
-# Remove old ROS2 logs
-rm -rf /root/.ros/log/*
+# -----------------------------
+# DDS / ROS2 safety cleanup
+# -----------------------------
+rm -rf /root/.ros/log/* || true
+rm -rf /dev/shm/* || true
 
-# Remove stale CycloneDDS shared memory
-rm -rf /dev/shm/*
+export ROS_DOMAIN_ID=0
 
-# --- END CLEANUP ---
+# -----------------------------
+# Explicit middleware safety
+# -----------------------------
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE=/root/.ros/fastdds.xml
 
-# Execute the passed command (launch your nodes)
+# Helpful for debugging (optional)
+export RCUTILS_LOGGING_BUFFERED_STREAM=1
+
+# -----------------------------
+# Execute command
+# -----------------------------
 exec "$@"

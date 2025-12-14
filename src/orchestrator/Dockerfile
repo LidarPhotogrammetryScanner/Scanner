@@ -1,5 +1,12 @@
 FROM --platform=linux/arm64 ros:kilted-ros-core
 
+# -----------------------------
+# ROS 2 Middleware configuration
+# -----------------------------
+# Force Fast DDS (NO CycloneDDS)
+ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+ENV FASTRTPS_DEFAULT_PROFILES_FILE=/root/.ros/fastdds.xml
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -21,6 +28,13 @@ COPY scanner_pkg /root/ros2_ws/src/scanner_pkg
 COPY config /root/ros2_ws/config
 COPY src/orchestrator /root/ros2_ws/src/orchestrator
 COPY src/orchestrator/entrypoint.sh /entrypoint.sh
+
+# -----------------------------
+# Fast DDS profile (disable SHM)
+# -----------------------------
+RUN mkdir -p /root/.ros
+COPY config/fastdds.xml /root/.ros/fastdds.xml
+
 RUN chmod +x /entrypoint.sh
 
 # Fix Python imports

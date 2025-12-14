@@ -14,6 +14,12 @@ fi
 
 export ROS_DOMAIN_ID=0
 
+# -----------------------------
+# Explicit middleware safety
+# -----------------------------
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE=/root/.ros/fastdds.xml
+
 # Run your Python script directly
 python3 /root/ros2_ws/src/servo/servo_service.py
 

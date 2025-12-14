@@ -15,6 +15,7 @@ motor = RpiMotorLib.BYJMotor("MyMotor", "28BYJ-48")
 
 def step_motor(steps, delay=0.1):
     # Move motor clockwise
+    print("STEPPING MOTOR NOW")
     motor.motor_run(GPIO_pins, 0.001, 512, True, False, "half", 0.001)
 
 def reset_motor():
