@@ -10,7 +10,6 @@
 #     def __init__(self):
 #         super().__init__('lidar_data_service')
 #
-#         # Create service using your custom JsonIO
 #         self.srv = self.create_service(JsonIO, '/lidar/measure', self.handle_process)
 #
 #         self.get_logger().info('Lidar JsonIO service is ready!')

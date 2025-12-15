@@ -1,5 +1,5 @@
 #general
-STEPS_PER_ROTATION = 360
+STEPS_PER_ROTATION = 2 #the max is 512
 
 #orchestrator
 
@@ -8,7 +8,7 @@ LIDAR_ROTATIONS_PER_STEP = 1
 
 #photogrammetry
 
-#servo
+#step_motor
 
 #data processing
 

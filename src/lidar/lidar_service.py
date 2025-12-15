@@ -5,7 +5,8 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
-from domain.dto.Point import DataPoint
+from domain.dto.data_point import DataPoint
+from domain.dto.lidar_response import LidarResponse
 from scanner_pkg.srv import JsonIO
 from sensor_msgs.msg import LaserScan
 from threading import Event
@@ -51,14 +52,12 @@ class LidarService(Node):
     def handle_process(self, request, response):
         try:
             request_data = json.loads(request.request)
-            step = float(request_data["step"])  # turntable rotation, degrees
+            step = int(request_data["step"])  # MUST be int (JSON-safe)
         except Exception as e:
             response.response = json.dumps({"error": f"Invalid request: {str(e)}"})
             return response
 
         self.get_logger().info(f"Waiting for one LiDAR scan at step {step}...")
-
-        # Wait for scan
         self.scan_event.clear()
         start_time = time.time()
         timeout = 10.0
@@ -69,21 +68,28 @@ class LidarService(Node):
                 response.response = json.dumps({"error": "Timeout waiting for LiDAR scan"})
                 return response
 
-        # Got scan
-        scan_msg = self.latest_scan
+        scan_msg: LaserScan = self.latest_scan
         original_ranges = np.array(scan_msg.ranges)
         original_angles = np.linspace(0, 360, num=len(original_ranges), endpoint=False)
 
-        # Resample to exactly 360 vertical points
         target_angles = np.arange(0, 360)
         interpolated_ranges = np.interp(target_angles, original_angles, original_ranges)
 
-        # Build DataPoint list (angle/radius only)
-        points = [DataPoint(angle=float(a), radius=float(r), step=step) for a, r in zip(target_angles, interpolated_ranges)]
+        points = [
+            DataPoint(
+                angle=float(a),
+                radius=float(r)
+            )
+            for a, r in zip(target_angles, interpolated_ranges)
+        ]
 
-        # Return JSON
-        response.response = json.dumps([dp.__dict__ for dp in points])
-        self.get_logger().info(f"Returned {len(points)} vertical points at step={step}")
+        response_model = LidarResponse(points=points)
+        response.response = response_model.json()
+
+        self.get_logger().info(
+            f"Returned {len(points)} points at step={step}"
+        )
+
         return response
 
 

@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y \
     ros-kilted-cyclonedds \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y python3-pydantic
+
 # Create workspace
 WORKDIR /root/ros2_ws
 RUN mkdir -p src
@@ -39,6 +41,10 @@ RUN mkdir -p /root/.ros
 COPY config/fastdds.xml /root/.ros/fastdds.xml
 
 RUN chmod +x /entrypoint.sh
+
+VOLUME /output
+RUN mkdir -p /output && chmod 777 /output
+
 # Fix Python imports
 ENV PYTHONPATH=/root/ros2_ws:$PYTHONPATH
 

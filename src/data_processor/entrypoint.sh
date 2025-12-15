@@ -20,6 +20,13 @@ export ROS_DOMAIN_ID=0
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export FASTRTPS_DEFAULT_PROFILES_FILE=/root/.ros/fastdds.xml
 
+# Ensure /output exists and is writable
+OUTPUT_DIR="/output"
+mkdir -p "$OUTPUT_DIR"
+chmod 777 "$OUTPUT_DIR"
+
+echo "Output directory: $OUTPUT_DIR"
+
 # Run your Python script directly
 python3 /root/ros2_ws/src/data_processor/data_service.py
 

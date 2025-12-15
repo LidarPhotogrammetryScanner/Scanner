@@ -7,7 +7,7 @@ from rclpy.node import Node
 
 from config import config
 from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.Point import DataPoint
+from domain.dto.data_point import DataPoint
 import time
 import random
 
@@ -16,7 +16,6 @@ class PhotogrammetryService(Node):
     def __init__(self):
         super().__init__('photogrammetry_service')
 
-        # Create service using your custom JsonIO
         self.srv = self.create_service(JsonIO, '/photogrammetry/measure', self.handle_process)
 
         self.get_logger().info('photogrammetry JsonIO service is ready!')

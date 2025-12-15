@@ -1,5 +1,5 @@
 #!/bin/bash
-# ros_entrypoint.sh for Servo node
+# ros_entrypoint.sh for Step motor node
 
 # Exit on error
 set -e
@@ -21,7 +21,7 @@ export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export FASTRTPS_DEFAULT_PROFILES_FILE=/root/.ros/fastdds.xml
 
 # Run your Python script directly
-python3 /root/ros2_ws/src/servo/servo_service.py
+python3 /root/ros2_ws/src/step_motor/step_motor_service.py
 
 # Execute any command passed to the container
 exec "$@"

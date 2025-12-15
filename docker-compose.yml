@@ -44,11 +44,11 @@ services:
     entrypoint: /entrypoint.sh
     network_mode: host
 
-  servo:
+  step_motor:
     build:
       context: .
-      dockerfile: src/servo/Dockerfile
-    container_name: servo
+      dockerfile: src/step_motor/Dockerfile
+    container_name: step_motor
     environment:
       - ROS_DOMAIN_ID=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
@@ -72,6 +72,8 @@ services:
     tty: true
     entrypoint: /entrypoint.sh
     network_mode: host
+    volumes:
+      - /home/pi/lidar_output:/output
 
   orchestrator:
     build:

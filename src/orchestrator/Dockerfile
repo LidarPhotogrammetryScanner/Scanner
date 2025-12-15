@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y \
     ros-kilted-cyclonedds \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y python3-pydantic
+
 WORKDIR /root/ros2_ws
 RUN mkdir -p src
 

@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
     ros-kilted-tf2-ros \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y python3-pydantic
 # -----------------------------
 # Initialize rosdep (safe in Docker)
 # -----------------------------

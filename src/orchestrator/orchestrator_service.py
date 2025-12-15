@@ -1,13 +1,14 @@
 import json
 import random
 import time
-from wsgiref.util import request_uri
 
 import rclpy
 from domain.communication.service_client import ServiceClient
-from src.orchestrator.scan_data import ScanData
+from domain.dto.data_point import DataPoint
+from domain.dto.scan_data import ScanData
 from std_srvs.srv import Trigger
 import config.config as config
+import domain.helpers.json_utils as json_utils
 from scanner_pkg.srv import JsonIO
 
 def main():
@@ -22,34 +23,29 @@ class Orchestrator:
         rclpy.init()
 
         self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
-        self.servoClient = ServiceClient(node_name="servo", service_type=JsonIO)
+        self.stepMotorClient = ServiceClient(node_name="step_motor", service_type=JsonIO)
         self.photogrammetryClient = ServiceClient(node_name="photogrammetry", service_type=JsonIO)
         self.lidarClient = ServiceClient(node_name="lidar", service_type=JsonIO)
         self.dataClient = ServiceClient(node_name="data", service_type=JsonIO)
-        self._scan_data = ScanData()
+        self._scan_data: ScanData = ScanData()
 
     def run(self):
 
-        time.sleep(5)
-        # self.reset_servo()
-
+        time.sleep(3)
+        self.lidar_scan(0)
         for i in range(config.STEPS_PER_ROTATION):
             self.measure(i)
+            time.sleep(5)
 
-        payload = {"step": 0}
-        response = self.dataClient.call('/data/process', request=json.dumps(payload))
+        self.process_data()
 
     def measure(self, step: int) -> None:
-        self.step_servo(step)
+        self.step_step_motor(step)
         self.lidar_scan(step)
 
-    def reset_servo(self) -> None:
-        payload = {"step": 0}
-        response = self.servoClient.call('/servo/reset', request=json.dumps(payload))
-
-    def step_servo(self, step: int) -> None:
+    def step_step_motor(self, step: int) -> None:
         payload = {"step": step}
-        response = self.servoClient.call('/servo/step', request=json.dumps(payload))
+        self.stepMotorClient.call('/step_motor/step', request=json.dumps(payload))
 
     def photogrammetry_measure(self, step: int) -> None:
         payload = {"step": step}
@@ -60,7 +56,16 @@ class Orchestrator:
     def lidar_scan(self, step: int) -> None:
         payload = { "step": step }
         response = self.lidarClient.call('/lidar/measure', request=json.dumps(payload))
-        self._scan_data.lidar_data[step] = response.response
+
+        lidar_response = json.loads(response.response)
+        points = lidar_response["points"]
+
+        self._scan_data.lidar_data[step] = [
+            DataPoint.parse_obj(p) for p in points
+        ]
+
+    def process_data(self):
+        self.dataClient.call('/data/process', request=self._scan_data.json())
 
 if __name__ == "__main__":
     main()

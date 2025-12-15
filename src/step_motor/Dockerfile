@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     python3-rpi.gpio \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y python3-pydantic
+
 # Install RpiMotorLib
 RUN pip3 install --break-system-packages RpiMotorLib
 
@@ -34,8 +36,8 @@ RUN mkdir -p src
 COPY domain /root/ros2_ws/domain
 COPY scanner_pkg /root/ros2_ws/src/scanner_pkg
 COPY config /root/ros2_ws/config
-COPY src/servo /root/ros2_ws/src/servo
-COPY src/servo/entrypoint.sh /entrypoint.sh
+COPY src/step_motor /root/ros2_ws/src/step_motor
+COPY src/step_motor/entrypoint.sh /entrypoint.sh
 
 # -----------------------------
 # Fast DDS profile (disable SHM)
@@ -56,4 +58,4 @@ ENV PYTHONPATH=/root/ros2_ws/install:$PYTHONPATH
 
 # Entrypoint and default CMD
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["ros2", "run", "servo_service", "servo_service"]
+CMD ["ros2", "run", "step_motor_service", "step_motor_service"]
