@@ -1,5 +1,4 @@
-ARG BUILDPLATFORM
-FROM --platform=${BUILDPLATFORM} ros:kilted-ros-core
+FROM --platform=linux/arm64 ros:kilted-ros-core
 
 # -----------------------------
 # ROS 2 Middleware configuration

@@ -1,6 +1,4 @@
-# Use ROS2 Kilted core for ARM64 (Raspberry Pi)
-ARG BUILDPLATFORM
-FROM --platform=${BUILDPLATFORM} ros:kilted-ros-core
+FROM --platform=linux/arm64 ros:kilted-ros-core
 
 ENV DEBIAN_FRONTEND=noninteractive
 

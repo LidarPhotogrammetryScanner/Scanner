@@ -49,81 +49,46 @@ class LidarService(Node):
         self.latest_scan = msg
         self.scan_event.set()
 
-    # def handle_process(self, request, response):
-    #     try:
-    #         request_data = json.loads(request.request)
-    #         step = int(request_data["step"])  # MUST be int (JSON-safe)
-    #     except Exception as e:
-    #         response.response = json.dumps({"error": f"Invalid request: {str(e)}"})
-    #         return response
-
-    #     self.get_logger().info(f"Waiting for one LiDAR scan at step {step}...")
-    #     self.scan_event.clear()
-    #     start_time = time.time()
-    #     timeout = 10.0
-
-    #     while not self.scan_event.is_set():
-    #         rclpy.spin_once(self, timeout_sec=0.01)
-    #         if time.time() - start_time > timeout:
-    #             response.response = json.dumps({"error": "Timeout waiting for LiDAR scan"})
-    #             return response
-
-    #     scan_msg: LaserScan = self.latest_scan
-    #     original_ranges = np.array(scan_msg.ranges)
-    #     original_angles = np.linspace(0, 360, num=len(original_ranges), endpoint=False)
-
-    #     target_angles = np.arange(0, 360)
-    #     interpolated_ranges = np.interp(target_angles, original_angles, original_ranges)
-
-    #     laser_scans = [
-    #         LaserScan(
-    #             angle=float(a),
-    #             distance=float(r)
-    #         )
-    #         for a, r in zip(target_angles, interpolated_ranges)
-    #     ]
-
-    #     response_model = LidarResponse(laser_scans=laser_scans)
-    #     response.response = response_model.json()
-
-    #     self.get_logger().info(
-    #         f"Returned {len(laser_scans)} laser scans at step={step}"
-    #     )
-
-    #     return response
-
     def handle_process(self, request, response):
-        # request.request is a JSON string
         try:
             request_data = json.loads(request.request)
-            step = float(request_data["step"])
+            step = int(request_data["step"])  # MUST be int (JSON-safe)
         except Exception as e:
-            response.response = json.dumps({
-                "error": f"Invalid request: {str(e)}"
-            })
+            response.response = json.dumps({"error": f"Invalid request: {str(e)}"})
             return response
 
-        # Read mock data from lidar_scans.csv
-        # Get the directory where this script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(script_dir, 'lidar_scans.csv')
-        
-        laser_scans = []
-        with open(csv_path, 'r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for row in reader:
-                distance, angle = row
-                laser_scans.append(LaserScan(distance=float(distance), angle=float(angle)))
+        self.get_logger().info(f"Waiting for one LiDAR scan at step {step}...")
+        self.scan_event.clear()
+        start_time = time.time()
+        timeout = 10.0
 
+        while not self.scan_event.is_set():
+            rclpy.spin_once(self, timeout_sec=0.01)
+            if time.time() - start_time > timeout:
+                response.response = json.dumps({"error": "Timeout waiting for LiDAR scan"})
+                return response
 
-        # Convert points to JSON
-        laser_scans_json = [laser_scan.__dict__ for laser_scan in laser_scans]
+        scan_msg: LaserScan = self.latest_scan
+        original_ranges = np.array(scan_msg.ranges)
+        original_angles = np.linspace(0, 360, num=len(original_ranges), endpoint=False)
 
-        # Write JSON output into the response string
-        response.response = json.dumps(laser_scans_json)
+        target_angles = np.arange(0, 360)
+        interpolated_ranges = np.interp(target_angles, original_angles, original_ranges)
 
-        self.get_logger().info(f'Processed request: {len(laser_scans)} laser scans at step {step}.')
+        laser_scans = [
+            LaserScan(
+                angle=float(a),
+                distance=float(r)
+            )
+            for a, r in zip(target_angles, interpolated_ranges)
+        ]
+
+        response_model = LidarResponse(laser_scans=laser_scans)
+        response.response = response_model.json()
+
+        self.get_logger().info(
+            f"Returned {len(laser_scans)} laser scans at step={step}"
+        )
 
         return response
 
