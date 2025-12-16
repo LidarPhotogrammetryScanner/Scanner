@@ -1,18 +1,15 @@
 import json
 import math
-import random
-import time
 
+from domain.dto.laser_scan import LaserScan
+from domain.dto.point import Point
 import rclpy
 from rclpy.node import Node
 
 from config import config
 from domain.dto.scan_data import ScanData
 from domain.helpers.json_utils import from_json
-from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.data_point import DataPoint
-import time
-import random
+from scanner_pkg.srv import JsonIO
 
 
 class DataProcessorService(Node):
@@ -24,55 +21,67 @@ class DataProcessorService(Node):
         self.get_logger().info('data_service JsonIO service is ready!')
 
     def handle_process(self, request, response):
-        import math
-        import os
-        import json
-
         print("PROCESSING DATA")
         scan_data: ScanData = ScanData.parse_raw(request.request)
 
         lidar_data = scan_data.lidar_data
         points = []
+        for step, laser_scans in lidar_data.items():
+            for laser_scan in laser_scans:
+                point = laser_data_to_point(laser_scan, step)
+                points.append(point)
+        
+        pcd_file = points_to_pcd(points)
 
-        total_steps = len(lidar_data)
-
-        for step, data_points in lidar_data.items():
-            vertical_angle = 2 * math.pi * step / total_steps
-            for dp in data_points:
-                if dp.radius is None or dp.radius <= 0.0 or math.isnan(dp.radius):
-                    continue
-                horiz_angle = math.radians(dp.angle)
-                r = dp.radius
-                x = r * math.cos(horiz_angle) * math.cos(vertical_angle)
-                y = r * math.sin(horiz_angle) * math.cos(vertical_angle)
-                z = r * math.sin(vertical_angle)
-                points.append((x, y, z))
-
-        header = f"""# .PCD v0.7 - Point Cloud Data file format
-    VERSION 0.7
-    FIELDS x y z
-    SIZE 4 4 4
-    TYPE F F F
-    COUNT 1 1 1
-    WIDTH {len(points)}
-    HEIGHT 1
-    VIEWPOINT 0 0 0 1 0 0 0
-    POINTS {len(points)}
-    DATA ascii
-    """
-        points_text = "\n".join(f"{x:.6f} {y:.6f} {z:.6f}" for x, y, z in points)
-        pcd_content = header + points_text
-
-        # Write PCD to Docker-managed volume
-        pcd_file_path = "/output/scan.pcd"
-        with open(pcd_file_path, "w") as f:
-            f.write(pcd_content)
-
-        print(f"PCD saved to {pcd_file_path}")
-
-        response.response = json.dumps(True)
+        # Write to mounted volume directory accessible from host
+        output_path = "/output/scan.pcd"
+        with open(output_path, "w") as f:
+            f.write(pcd_file)
+        
+        self.get_logger().info(f"PCD file written to {output_path}")
+            
+        response.response = json.dumps(True)  # set the response
         return response
 
+def laser_data_to_point(laser_scan: LaserScan, step: int) -> Point:
+    ''' Converts a laser scan and servo angle to a 3D point in the world coordinate system. '''
+
+    servo_angle_deg = (float(step) / config.STEPS_PER_ROTATION) * 360
+    servo_angle = math.radians(servo_angle_deg)
+
+    horizontal_distance = laser_scan.distance * math.sin(laser_scan.angle)
+    vertical_distance = laser_scan.distance * math.cos(laser_scan.angle)
+
+    x = horizontal_distance * math.cos(servo_angle)
+    y = horizontal_distance * math.sin(servo_angle)
+    z = vertical_distance
+
+    return Point(
+        x=x,
+        y=y,
+        z=z,
+    )
+
+def points_to_pcd(points) -> str:
+    ''' Converts a list of points to a PCD file. '''
+    
+    pcd_file = f"""PCD_FILE
+VERSION .7
+FIELDS x y z
+SIZE 4 4 4
+TYPE F F F
+COUNT 1 1 1
+WIDTH 1
+HEIGHT 1
+VIEWPOINT 0 0 0 1 0 0 0
+POINTS {len(points)}
+DATA ascii
+"""
+
+    for point in points:
+        pcd_file += f"\n{point.x} {point.y} {point.z}"
+
+    return pcd_file
 
 def main(args=None):
     rclpy.init(args=args)

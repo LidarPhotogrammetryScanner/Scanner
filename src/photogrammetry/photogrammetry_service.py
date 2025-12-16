@@ -7,7 +7,7 @@ from rclpy.node import Node
 
 from config import config
 from scanner_pkg.srv import JsonIO   # <-- your service
-from domain.dto.data_point import DataPoint
+from domain.dto.laser_scan import LaserScan
 import time
 import random
 

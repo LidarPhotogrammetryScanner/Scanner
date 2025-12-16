@@ -1,5 +1,6 @@
 # Use ROS2 Kilted core for ARM64 (Raspberry Pi)
-FROM --platform=linux/arm64 ros:kilted-ros-core
+ARG BUILDPLATFORM
+FROM --platform=${BUILDPLATFORM} ros:kilted-ros-core
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -59,7 +60,7 @@ WORKDIR /root/ldlidar_ws
 RUN /bin/bash -lc "\
     source /opt/ros/kilted/setup.bash && \
     colcon build --symlink-install \
-"
+    "
 
 # -----------------------------
 # Fast DDS profile (disable SHM)

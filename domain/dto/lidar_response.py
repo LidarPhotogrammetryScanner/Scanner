@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from typing import List
 
-from domain.dto.data_point import DataPoint
+from domain.dto.laser_scan import LaserScan
 
 
 class LidarResponse(BaseModel):
-    points: List[DataPoint]
+    laser_scans: List[LaserScan]

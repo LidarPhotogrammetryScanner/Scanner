@@ -4,6 +4,8 @@ services:
   lidar:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/lidar/Dockerfile
     container_name: lidar
     environment:
@@ -18,6 +20,8 @@ services:
   lidar_data:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/lidar_data/Dockerfile
     container_name: ros2_ldlidar
     devices:
@@ -34,6 +38,8 @@ services:
   photogrammetry:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/photogrammetry/Dockerfile
     container_name: photogrammetry
     environment:
@@ -47,6 +53,8 @@ services:
   step_motor:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/step_motor/Dockerfile
     container_name: step_motor
     environment:
@@ -63,6 +71,8 @@ services:
   data_processor:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/data_processor/Dockerfile
     container_name: data_processor
     environment:
@@ -78,6 +88,8 @@ services:
   orchestrator:
     build:
       context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
       dockerfile: src/orchestrator/Dockerfile
     container_name: orchestrator
     depends_on:

@@ -4,7 +4,7 @@ import time
 
 import rclpy
 from domain.communication.service_client import ServiceClient
-from domain.dto.data_point import DataPoint
+from domain.dto.laser_scan import LaserScan
 from domain.dto.scan_data import ScanData
 from std_srvs.srv import Trigger
 import config.config as config
@@ -61,7 +61,7 @@ class Orchestrator:
         points = lidar_response["points"]
 
         self._scan_data.lidar_data[step] = [
-            DataPoint.parse_obj(p) for p in points
+            LaserScan.parse_obj(p) for p in points
         ]
 
     def process_data(self):

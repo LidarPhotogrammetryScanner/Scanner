@@ -1,8 +1,8 @@
 import json
 import rclpy
 from rclpy.node import Node
-from RpiMotorLib import RpiMotorLib
-import RPi.GPIO as GPIO
+# from RpiMotorLib import RpiMotorLib
+# import RPi.GPIO as GPIO
 
 from config.config import STEPS_PER_ROTATION
 from scanner_pkg.srv import JsonIO
@@ -37,8 +37,8 @@ class StepMotorService(Node):
             response.response = json.dumps(False)
             return response
 
-        step_motor(step, delay=0.001)
-        self.get_logger().info(f"Moved stepper to step {step}")
+        # step_motor(step, delay=0.001)
+        # self.get_logger().info(f"Moved stepper to step {step}")
         response.response = json.dumps(True)
         return response
 
