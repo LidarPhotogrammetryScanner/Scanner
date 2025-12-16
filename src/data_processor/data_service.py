@@ -34,6 +34,7 @@ class DataProcessorService(Node):
         lidar_data = scan_data.lidar_data
         points = []
 
+
         total_steps = len(lidar_data)
 
         for step, data_points in lidar_data.items():
