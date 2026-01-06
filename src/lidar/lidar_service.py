@@ -2,23 +2,30 @@ import csv
 import json
 import os
 import time
-from domain.dto.laser_scan import LaserScan
 import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-
-from domain.dto.lidar_response import LidarResponse
-from scanner_pkg.srv import JsonIO
 from threading import Event
 import numpy as np
+
+# ROS2 message type for /scan
+from sensor_msgs.msg import LaserScan as RosLaserScan
+
+# Your DTOs
+from domain.dto.laser_scan import LaserScan as LaserScanDTO
+from domain.dto.lidar_response import LidarResponse
+
+# Service type
+from scanner_pkg.srv import JsonIO
+
 
 class LidarService(Node):
     def __init__(self):
         super().__init__('lidar_service')
+
         self.cb_group = ReentrantCallbackGroup()
 
-        # Service
         self.srv = self.create_service(
             JsonIO,
             '/lidar/measure',
@@ -26,16 +33,17 @@ class LidarService(Node):
             callback_group=self.cb_group
         )
 
-        # Persistent subscription to /scan
         self.scan_event = Event()
         self.latest_scan = None
+
         qos = QoSProfile(
             depth=10,
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE
         )
+
         self.scan_sub = self.create_subscription(
-            LaserScan,
+            RosLaserScan,
             '/scan',
             self.scan_callback,
             qos,
@@ -44,20 +52,18 @@ class LidarService(Node):
 
         self.get_logger().info('Lidar JsonIO service is ready!')
 
-    def scan_callback(self, msg: LaserScan):
-        # Store latest scan and notify waiting handler
+    def scan_callback(self, msg: RosLaserScan):
         self.latest_scan = msg
         self.scan_event.set()
 
     def handle_process(self, request, response):
         try:
             request_data = json.loads(request.request)
-            step = int(request_data["step"])  # MUST be int (JSON-safe)
+            step = int(request_data["step"])
         except Exception as e:
             response.response = json.dumps({"error": f"Invalid request: {str(e)}"})
             return response
 
-        self.get_logger().info(f"Waiting for one LiDAR scan at step {step}...")
         self.scan_event.clear()
         start_time = time.time()
         timeout = 10.0
@@ -68,15 +74,18 @@ class LidarService(Node):
                 response.response = json.dumps({"error": "Timeout waiting for LiDAR scan"})
                 return response
 
-        scan_msg: LaserScan = self.latest_scan
+        scan_msg: RosLaserScan = self.latest_scan
+
         original_ranges = np.array(scan_msg.ranges)
+
+        # assume 360deg sweep
         original_angles = np.linspace(0, 360, num=len(original_ranges), endpoint=False)
 
         target_angles = np.arange(0, 360)
         interpolated_ranges = np.interp(target_angles, original_angles, original_ranges)
 
         laser_scans = [
-            LaserScan(
+            LaserScanDTO(
                 angle=float(a),
                 distance=float(r)
             )
@@ -85,10 +94,6 @@ class LidarService(Node):
 
         response_model = LidarResponse(laser_scans=laser_scans)
         response.response = response_model.json()
-
-        self.get_logger().info(
-            f"Returned {len(laser_scans)} laser scans at step={step}"
-        )
 
         return response
 

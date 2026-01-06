@@ -8,7 +8,6 @@ from rclpy.node import Node
 
 from config import config
 from domain.dto.scan_data import ScanData
-from domain.helpers.json_utils import from_json
 from scanner_pkg.srv import JsonIO
 
 
@@ -22,66 +21,70 @@ class DataProcessorService(Node):
 
     def handle_process(self, request, response):
         print("PROCESSING DATA")
+
         scan_data: ScanData = ScanData.parse_raw(request.request)
 
         lidar_data = scan_data.lidar_data
         points = []
+
         for step, laser_scans in lidar_data.items():
             for laser_scan in laser_scans:
-                point = laser_data_to_point(laser_scan, step)
-                points.append(point)
-        
+                p = laser_data_to_point(laser_scan, step)
+                points.append(p)
+
         pcd_file = points_to_pcd(points)
 
-        # Write to mounted volume directory accessible from host
         output_path = "/output/scan.pcd"
         with open(output_path, "w") as f:
             f.write(pcd_file)
-        
+
         self.get_logger().info(f"PCD file written to {output_path}")
-            
-        response.response = json.dumps(True)  # set the response
+
+        response.response = json.dumps(True)
         return response
 
+
 def laser_data_to_point(laser_scan: LaserScan, step: int) -> Point:
-    ''' Converts a laser scan and servo angle to a 3D point in the world coordinate system. '''
+    # ---- SERVO ROTATION (around Z) ----
+    servo_angle = 2.0 * math.pi * (float(step) / float(config.STEPS_PER_ROTATION))
 
-    servo_angle_deg = (float(step) / config.STEPS_PER_ROTATION) * 360
-    servo_angle = math.radians(servo_angle_deg)
+    # ---- LIDAR SCAN ANGLE (convert DEGREES → RADIANS) ----
+    beam_angle = math.radians(laser_scan.angle)
 
-    horizontal_distance = laser_scan.distance * math.sin(laser_scan.angle)
-    vertical_distance = laser_scan.distance * math.cos(laser_scan.angle)
+    r = laser_scan.distance
 
-    x = horizontal_distance * math.cos(servo_angle)
-    y = horizontal_distance * math.sin(servo_angle)
-    z = vertical_distance
+    # ---- SPHERICAL → CARTESIAN ----
+    # beam angle = elevation
+    horizontal = r * math.cos(beam_angle)  # radius in XY plane
+    z = r * math.sin(beam_angle)
 
-    return Point(
-        x=x,
-        y=y,
-        z=z,
-    )
+    # rotate around Z according to servo step
+    x = horizontal * math.cos(servo_angle)
+    y = horizontal * math.sin(servo_angle)
+
+    return Point(x=x, y=y, z=z)
+
 
 def points_to_pcd(points) -> str:
-    ''' Converts a list of points to a PCD file. '''
-    
-    pcd_file = f"""PCD_FILE
-VERSION .7
-FIELDS x y z
-SIZE 4 4 4
-TYPE F F F
-COUNT 1 1 1
-WIDTH 1
-HEIGHT 1
-VIEWPOINT 0 0 0 1 0 0 0
-POINTS {len(points)}
-DATA ascii
-"""
+    n = len(points)
 
-    for point in points:
-        pcd_file += f"\n{point.x} {point.y} {point.z}"
+    header = (
+        "# .PCD v0.7 - Point Cloud Data file format\n"
+        "VERSION 0.7\n"
+        "FIELDS x y z\n"
+        "SIZE 4 4 4\n"
+        "TYPE F F F\n"
+        "COUNT 1 1 1\n"
+        f"WIDTH {n}\n"
+        "HEIGHT 1\n"
+        "VIEWPOINT 0 0 0 1 0 0 0\n"
+        f"POINTS {n}\n"
+        "DATA ascii\n"
+    )
 
-    return pcd_file
+    body = "\n".join(f"{p.x} {p.y} {p.z}" for p in points)
+    return header + body + "\n"
+
 
 def main(args=None):
     rclpy.init(args=args)

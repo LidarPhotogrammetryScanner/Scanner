@@ -35,20 +35,20 @@ services:
     entrypoint: /entrypoint.sh
     network_mode: host
 
-  photogrammetry:
-    build:
-      context: .
-      args:
-        BUILDPLATFORM: ${BUILDPLATFORM}
-      dockerfile: src/photogrammetry/Dockerfile
-    container_name: photogrammetry
-    environment:
-      - ROS_DOMAIN_ID=0
-      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-    stdin_open: true
-    tty: true
-    entrypoint: /entrypoint.sh
-    network_mode: host
+#  photogrammetry:
+#    build:
+#      context: .
+#      args:
+#        BUILDPLATFORM: ${BUILDPLATFORM}
+#      dockerfile: src/photogrammetry/Dockerfile
+#    container_name: photogrammetry
+#    environment:
+#      - ROS_DOMAIN_ID=0
+#      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+#    stdin_open: true
+#    tty: true
+#    entrypoint: /entrypoint.sh
+#    network_mode: host
 
   step_motor:
     build:
@@ -67,6 +67,24 @@ services:
     devices:
       - /dev/gpiomem:/dev/gpiomem   # Expose GPIO memory to container
     network_mode: host
+
+#  servo_motor:
+#    build:
+#      context: .
+#      args:
+#        BUILDPLATFORM: ${BUILDPLATFORM}
+#      dockerfile: src/servo_motor/Dockerfile
+#    container_name: servo_motor
+#    environment:
+#      - ROS_DOMAIN_ID=0
+#      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+#    stdin_open: true
+#    tty: true
+#    entrypoint: /entrypoint.sh
+#    privileged: true          # Needed for GPIO access
+#    devices:
+#      - /dev/gpiomem:/dev/gpiomem   # Expose GPIO memory to container
+#    network_mode: host
 
   data_processor:
     build:
