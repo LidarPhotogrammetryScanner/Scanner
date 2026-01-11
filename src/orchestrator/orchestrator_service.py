@@ -20,7 +20,8 @@ def main():
 class Orchestrator:
 
     def __init__(self):
-        time.sleep(random.uniform(5, 5))
+        print("starting in 60 seconds")
+        time.sleep(60)
         rclpy.init()
 
         self.orchestratorClient = ServiceClient(node_name="orchestrator", service_type=Trigger)
@@ -71,6 +72,7 @@ class Orchestrator:
         ]
 
     def process_data(self):
+        self.step_step_motor(0)
         self.dataClient.call('/data/process', request=self._scan_data.json())
 
 

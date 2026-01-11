@@ -1,52 +1,90 @@
 import json
+import time
 import rclpy
 from rclpy.node import Node
-from RpiMotorLib import RpiMotorLib
 import RPi.GPIO as GPIO
-
 from config.config import STEPS_PER_ROTATION
 from scanner_pkg.srv import JsonIO
 
-# Define stepper motor pins
-GPIO_pins = [17, 18, 27, 22]  # IN1, IN2, IN3, IN4
+# ───────── GPIO PINS ─────────
+DIR_PIN  = 17
+STEP_PIN = 27
+M2_PIN   = 16
+M1_PIN   = 22
+M0_PIN   = 24
 
-# Initialize motor
-motor = RpiMotorLib.BYJMotor("Motor", "28BYJ-48")
+# ───────── DRV8825 CONFIG ─────────
+# 1/32 microstepping
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(DIR_PIN, GPIO.OUT)
+GPIO.setup(STEP_PIN, GPIO.OUT)
+GPIO.setup(M0_PIN, GPIO.OUT)
+GPIO.setup(M1_PIN, GPIO.OUT)
+GPIO.setup(M2_PIN, GPIO.OUT)
 
-def step_motor(steps, delay=0.1):
-    # Move motor clockwise
-    print("STEPPING STEP MOTOR")
-    motor.motor_run(GPIO_pins, 0.001, 512 / STEPS_PER_ROTATION, True, False, "half", 0.001)
+GPIO.output(M0_PIN, GPIO.LOW)
+GPIO.output(M1_PIN, GPIO.LOW)
+GPIO.output(M2_PIN, GPIO.HIGH)
 
-def reset_motor():
+# ───────── MOTION CONFIG ─────────
+STEP_DELAY = 0.002          # speed
+MOVE_MICROSTEPS = int(3200 / STEPS_PER_ROTATION) # how far the motor moves per service call
+
+# 160 @ 1/32 microstep = 160 / 6400 rev = 0.025 rev = 9°
+
+
+# ───────── MOTOR DRIVER ─────────
+def move_motor():
+    GPIO.output(DIR_PIN, GPIO.HIGH)
+
+    for _ in range(MOVE_MICROSTEPS):
+        GPIO.output(STEP_PIN, GPIO.HIGH)
+        time.sleep(STEP_DELAY)
+        GPIO.output(STEP_PIN, GPIO.LOW)
+        time.sleep(STEP_DELAY)
+
+
+def cleanup():
     GPIO.cleanup()
 
+
+# ───────── ROS2 SERVICE ─────────
 class StepMotorService(Node):
 
     def __init__(self):
         super().__init__('step_motor_service')
-
         self.srv_step = self.create_service(JsonIO, '/step_motor/step', self.handle_step)
-        self.get_logger().info('StepMotorService is ready!')
+        self.get_logger().info("DRV8825 NEMA17 Service Ready")
+
 
     def handle_step(self, request, response):
-        req_json = json.loads(request.request)
-        step = req_json.get("step", None)
-        if step is None:
-            self.get_logger().error("Missing 'step' in request")
+        try:
+            req_json = json.loads(request.request)
+            step = req_json.get("step", None)
+        except:
             response.response = json.dumps(False)
             return response
 
-        step_motor(step, delay=0.001)
+        # Motor movement is NOT based on "step"
+        move_motor()
+
+        # "step" is only informational — exactly like before
         self.get_logger().info(f"Moved stepper to step {step}")
+
         response.response = json.dumps(True)
         return response
+
 
 def main(args=None):
     rclpy.init(args=args)
     node = StepMotorService()
-    rclpy.spin(node)
-    rclpy.shutdown()
+
+    try:
+        rclpy.spin(node)
+    finally:
+        cleanup()
+        rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()

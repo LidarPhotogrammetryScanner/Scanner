@@ -1,5 +1,5 @@
 #general
-STEPS_PER_ROTATION = 90 #the max is 512
+STEPS_PER_ROTATION = 1600 #the max is 512
 
 #orchestrator
 
