@@ -1,6 +1,7 @@
 import json
 import math
 
+from config.config import OUTPUT_PATH
 from domain.dto.laser_scan import LaserScan
 from domain.dto.point import Point
 import rclpy
@@ -34,11 +35,10 @@ class DataProcessorService(Node):
 
         pcd_file = points_to_pcd(points)
 
-        output_path = "/output/scan.pcd"
-        with open(output_path, "w") as f:
+        with open(OUTPUT_PATH, "w") as f:
             f.write(pcd_file)
 
-        self.get_logger().info(f"PCD file written to {output_path}")
+        self.get_logger().info(f"PCD file written to {OUTPUT_PATH}")
 
         response.response = json.dumps(True)
         return response

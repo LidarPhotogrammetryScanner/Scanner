@@ -3,18 +3,13 @@ import time
 import rclpy
 from rclpy.node import Node
 import RPi.GPIO as GPIO
-from config.config import STEPS_PER_ROTATION
+from config.config import *
 from scanner_pkg.srv import JsonIO
 
 # ───────── GPIO PINS ─────────
-DIR_PIN  = 17
-STEP_PIN = 27
-M2_PIN   = 16
-M1_PIN   = 22
-M0_PIN   = 24
 
 # ───────── DRV8825 CONFIG ─────────
-# 1/32 microstepping
+# 1/16 microstepping
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(DIR_PIN, GPIO.OUT)
 GPIO.setup(STEP_PIN, GPIO.OUT)
@@ -23,14 +18,10 @@ GPIO.setup(M1_PIN, GPIO.OUT)
 GPIO.setup(M2_PIN, GPIO.OUT)
 
 GPIO.output(M0_PIN, GPIO.LOW)
-GPIO.output(M1_PIN, GPIO.LOW)
-GPIO.output(M2_PIN, GPIO.HIGH)
+GPIO.output(M1_PIN, GPIO.HIGH)
+GPIO.output(M2_PIN, GPIO.LOW)
 
 # ───────── MOTION CONFIG ─────────
-STEP_DELAY = 0.002          # speed
-MOVE_MICROSTEPS = int(3200 / STEPS_PER_ROTATION) # how far the motor moves per service call
-
-# 160 @ 1/32 microstep = 160 / 6400 rev = 0.025 rev = 9°
 
 
 # ───────── MOTOR DRIVER ─────────
