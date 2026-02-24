@@ -1,40 +1,125 @@
-version: "3.8"
+version: "3.9"
+
 services:
   lidar:
-    build: .
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
+      dockerfile: src/lidar/Dockerfile
+    container_name: lidar
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    stdin_open: true
+    tty: true
+    entrypoint: /entrypoint.sh
+    network_mode: host
+    privileged: true
+
+  lidar_data:
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
+      dockerfile: src/lidar_data/Dockerfile
     container_name: ros2_ldlidar
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     environment:
-      - ROS_DOMAIN_ID=5
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    privileged: true  
-    command: >
-      bash -c "
-      ros2 launch ldlidar_ros2 ld14p.launch.py
-      "
-    networks:
-      - ros-net
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    privileged: true
+    command: ros2 launch ldlidar_ros2 ld14p.launch.py
     tty: true
+    entrypoint: /entrypoint.sh
+    network_mode: host
 
-#  rviz:
-#    build: .
-#    container_name: ros2_ldlidar_rviz
-#    depends_on:
-#      - lidar
+#  photogrammetry:
+#    build:
+#      context: .
+#      args:
+#        BUILDPLATFORM: ${BUILDPLATFORM}
+#      dockerfile: src/photogrammetry/Dockerfile
+#    container_name: photogrammetry
 #    environment:
-#      - ROS_DOMAIN_ID=5
-#      - DISPLAY=${DISPLAY}
-#    volumes:
-#      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-#    command: >
-#      bash -c "
-#      rviz2
-#      "
-#    networks:
-#      - ros-net
+#      - ROS_DOMAIN_ID=0
+#      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+#    stdin_open: true
 #    tty: true
+#    entrypoint: /entrypoint.sh
+#    network_mode: host
 
+  step_motor:
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
+      dockerfile: src/step_motor/Dockerfile
+    container_name: step_motor
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    stdin_open: true
+    tty: true
+    entrypoint: /entrypoint.sh
+    privileged: true          # Needed for GPIO access
+    devices:
+      - /dev/gpiomem:/dev/gpiomem   # Expose GPIO memory to container
+    network_mode: host
+
+#  servo_motor:
+#    build:
+#      context: .
+#      args:
+#        BUILDPLATFORM: ${BUILDPLATFORM}
+#      dockerfile: src/servo_motor/Dockerfile
+#    container_name: servo_motor
+#    environment:
+#      - ROS_DOMAIN_ID=0
+#      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+#    stdin_open: true
+#    tty: true
+#    entrypoint: /entrypoint.sh
+#    privileged: true          # Needed for GPIO access
+#    devices:
+#      - /dev/gpiomem:/dev/gpiomem   # Expose GPIO memory to container
+#    network_mode: host
+
+  data_processor:
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
+      dockerfile: src/data_processor/Dockerfile
+    container_name: data_processor
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    stdin_open: true
+    tty: true
+    entrypoint: /entrypoint.sh
+    network_mode: host
+    volumes:
+      - /home/pi/lidar_output:/output
+
+  orchestrator:
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: ${BUILDPLATFORM}
+      dockerfile: src/orchestrator/Dockerfile
+    container_name: orchestrator
+    depends_on:
+      - data_processor
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    stdin_open: true
+    tty: true
+    entrypoint: /entrypoint.sh
+    network_mode: host
 
 networks:
-  ros-net:
+  default:
+    driver: bridge
